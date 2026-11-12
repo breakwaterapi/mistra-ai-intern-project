@@ -1,5 +1,5 @@
 import re
-from mistralai.client import MistralClient
+from mistralai.client import Mistral
 from app.core.config import settings
 
 class AnalysisService:
@@ -11,9 +11,9 @@ class AnalysisService:
         Initializes the Mistral AI client.
         """
         try:
-            self.client = MistralClient(api_key=settings.MISTRAL_API_KEY)
+            self.client = Mistral(api_key=settings.MISTRAL_API_KEY)
         except Exception as e:
-            print(f"Error initializing MistralClient: {e}")
+            print(f"Error initializing Mistral: {e}")
             self.client = None
 
     def _is_valid_code(self, code: str) -> bool:
@@ -57,7 +57,7 @@ The DataFrame is available in a variable named `df`.
         ]
 
         try:
-            chat_response = self.client.chat(
+            chat_response = self.client.chat.complete(
                 model="mistral-large-latest",
                 messages=messages,
             )

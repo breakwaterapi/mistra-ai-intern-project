@@ -3,7 +3,7 @@ uvicorn[standard]
 pandas
 python-dotenv
 python-multipart
-mistralai==0.4.2
+mistralai>=2
 pydantic-settings
 matplotlib
 pytest

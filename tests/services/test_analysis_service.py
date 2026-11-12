@@ -13,7 +13,7 @@ def sample_schema():
     """Provides a sample DataFrame schema for testing."""
     return {"col1": "int64", "col2": "object"}
 
-@patch('app.services.analysis_service.MistralClient')
+@patch('app.services.analysis_service.Mistral')
 def test_generate_analysis_code_success(mock_mistral_client, sample_schema):
     """
     Tests successful code generation when the AI returns a valid code block.
@@ -21,7 +21,7 @@ def test_generate_analysis_code_success(mock_mistral_client, sample_schema):
     # Arrange
     mock_response = MagicMock()
     mock_response.choices[0].message.content = "```python\nprint(df['col1'].sum())\n```"
-    mock_mistral_client.return_value.chat.return_value = mock_response
+    mock_mistral_client.return_value.chat.complete.return_value = mock_response
     
     service = AnalysisService()
     
@@ -30,9 +30,9 @@ def test_generate_analysis_code_success(mock_mistral_client, sample_schema):
     
     # Assert
     assert result == "print(df['col1'].sum())"
-    service.client.chat.assert_called_once()
+    service.client.chat.complete.assert_called_once()
 
-@patch('app.services.analysis_service.MistralClient')
+@patch('app.services.analysis_service.Mistral')
 def test_generate_code_when_ai_returns_invalid(mock_mistral_client, sample_schema):
     """
     Tests that a ValueError is raised when the AI explicitly returns 'INVALID'.
@@ -40,7 +40,7 @@ def test_generate_code_when_ai_returns_invalid(mock_mistral_client, sample_schem
     # Arrange
     mock_response = MagicMock()
     mock_response.choices[0].message.content = "INVALID"
-    mock_mistral_client.return_value.chat.return_value = mock_response
+    mock_mistral_client.return_value.chat.complete.return_value = mock_response
 
     service = AnalysisService()
 
@@ -52,7 +52,7 @@ def test_generate_code_when_ai_returns_invalid(mock_mistral_client, sample_schem
     assert "Model's Raw Response" in str(excinfo.value)
     assert "INVALID" in str(excinfo.value)
 
-@patch('app.services.analysis_service.MistralClient')
+@patch('app.services.analysis_service.Mistral')
 def test_generate_code_when_ai_returns_non_code_text(mock_mistral_client, sample_schema):
     """
     Tests that a ValueError is raised when the AI returns text that isn't valid code.
@@ -61,7 +61,7 @@ def test_generate_code_when_ai_returns_non_code_text(mock_mistral_client, sample
     raw_response = "I cannot answer this question."
     mock_response = MagicMock()
     mock_response.choices[0].message.content = raw_response
-    mock_mistral_client.return_value.chat.return_value = mock_response
+    mock_mistral_client.return_value.chat.complete.return_value = mock_response
 
     service = AnalysisService()
 
@@ -72,13 +72,13 @@ def test_generate_code_when_ai_returns_non_code_text(mock_mistral_client, sample
     assert "I was unable to generate analysis code for your request." in str(excinfo.value)
     assert raw_response in str(excinfo.value)
 
-@patch('app.services.analysis_service.MistralClient')
+@patch('app.services.analysis_service.Mistral')
 def test_generate_code_handles_api_error(mock_mistral_client, sample_schema):
     """
     Tests that a RuntimeError is raised when the Mistral client fails.
     """
     # Arrange
-    mock_mistral_client.return_value.chat.side_effect = Exception("API connection failed")
+    mock_mistral_client.return_value.chat.complete.side_effect = Exception("API connection failed")
     
     service = AnalysisService()
 
@@ -88,7 +88,7 @@ def test_generate_code_handles_api_error(mock_mistral_client, sample_schema):
         
     assert "Failed to communicate with Mistral AI: API connection failed" in str(excinfo.value)
 
-@patch('app.services.analysis_service.MistralClient')
+@patch('app.services.analysis_service.Mistral')
 def test_code_extraction_from_text_with_markdown(mock_mistral_client, sample_schema):
     """
     Tests that code is correctly extracted from a response containing explanations and markdown.
